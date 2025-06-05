@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!-- saved from url=(0032)http://127.0.0.1:5500/index.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <title>PersonasDB</title>
+  <script src="./PersonasDB_files/dexie.min.js.descarga"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    input, button {
+      display: block;
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    li {
+      margin: 8px 0;
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Registrar Persona</h2>
+
+  <input type="text" id="nombre" placeholder="Nombre">
+  <input type="text" id="apellido" placeholder="Apellido">
+  <input type="number" id="anioNacimiento" placeholder="Año de Nacimiento">
+  <button id="guardarBtn">Guardar</button>
+
+  <h2>Personas Registradas</h2>
+  <ul id="listaPersonas"><li>Ashly Pinto - Edad: 19 años</li><li>Aylín Orellana - Edad: 10 años</li><li>José Recinos - Edad: 21 años</li><li>Leonel Lima - Edad: 37 años</li><li>Carolina Portillo - Edad: 41 años</li><li>Nicol Pinto - Edad: 17 años</li></ul>
+
+  <script>
+    // 1. Crear la base de datos "PersonasDB" y la tabla "personas"
+    const db = new Dexie("PersonasDB");
+    db.version(1).stores({
+      personas: "++id, nombre, apellido, anioNacimiento"
+    });
+
+    // 2. Referencias al DOM
+    const nombreInput = document.getElementById("nombre");
+    const apellidoInput = document.getElementById("apellido");
+    const anioNacimientoInput = document.getElementById("anioNacimiento");
+    const guardarBtn = document.getElementById("guardarBtn");
+    const listaPersonas = document.getElementById("listaPersonas");
+
+    // 3. Calcular edad desde el año de nacimiento
+    function calcularEdad(anioNacimiento) {
+      const anioActual = new Date().getFullYear();
+      return anioActual - anioNacimiento;
+    }
+
+    // 4. Mostrar personas en la lista
+    async function mostrarPersonas() {
+      const personas = await db.personas.toArray();
+      listaPersonas.innerHTML = "";
+      personas.forEach(persona => {
+        const edad = calcularEdad(persona.anioNacimiento);
+        const li = document.createElement("li");
+        li.textContent = `${persona.nombre} ${persona.apellido} - Edad: ${edad} años`;
+        listaPersonas.appendChild(li);
+      });
+    }
+
+    // 5. Guardar persona al hacer clic
+    guardarBtn.addEventListener("click", async () => {
+      const nombre = nombreInput.value.trim();
+      const apellido = apellidoInput.value.trim();
+      const anioNacimiento = parseInt(anioNacimientoInput.value);
+
+      if (nombre && apellido && !isNaN(anioNacimiento)) {
+        await db.personas.add({
+          nombre,
+          apellido,
+          anioNacimiento
+        });
+
+        // Limpiar campos
+        nombreInput.value = "";
+        apellidoInput.value = "";
+        anioNacimientoInput.value = "";
+
+        // Actualizar lista
+        mostrarPersonas();
+      } else {
+        alert("Por favor, completa todos los campos correctamente.");
+      }
+    });
+
+    // 6. Mostrar personas al cargar la página
+    window.addEventListener("DOMContentLoaded", mostrarPersonas);
+  </script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+
+
+</body></html>

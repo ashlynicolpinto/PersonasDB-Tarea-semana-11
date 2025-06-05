@@ -1,0 +1,106 @@
+ <!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>PersonasDB</title>
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    input, button {
+      display: block;
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    li {
+      margin: 8px 0;
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Registrar Persona</h2>
+
+  <input type="text" id="nombre" placeholder="Nombre">
+  <input type="text" id="apellido" placeholder="Apellido">
+  <input type="number" id="anioNacimiento" placeholder="Año de Nacimiento">
+  <button id="guardarBtn">Guardar</button>
+
+  <h2>Personas Registradas</h2>
+  <ul id="listaPersonas"></ul>
+
+  <script>
+    // 1. Crear la base de datos "PersonasDB" y la tabla "personas"
+    const db = new Dexie("PersonasDB");
+    db.version(1).stores({
+      personas: "++id, nombre, apellido, anioNacimiento"
+    });
+
+    // 2. Referencias al DOM
+    const nombreInput = document.getElementById("nombre");
+    const apellidoInput = document.getElementById("apellido");
+    const anioNacimientoInput = document.getElementById("anioNacimiento");
+    const guardarBtn = document.getElementById("guardarBtn");
+    const listaPersonas = document.getElementById("listaPersonas");
+
+    // 3. Calcular edad desde el año de nacimiento
+    function calcularEdad(anioNacimiento) {
+      const anioActual = new Date().getFullYear();
+      return anioActual - anioNacimiento;
+    }
+
+    // 4. Mostrar personas en la lista
+    async function mostrarPersonas() {
+      const personas = await db.personas.toArray();
+      listaPersonas.innerHTML = "";
+      personas.forEach(persona => {
+        const edad = calcularEdad(persona.anioNacimiento);
+        const li = document.createElement("li");
+        li.textContent = `${persona.nombre} ${persona.apellido} - Edad: ${edad} años`;
+        listaPersonas.appendChild(li);
+      });
+    }
+
+    // 5. Guardar persona al hacer clic
+    guardarBtn.addEventListener("click", async () => {
+      const nombre = nombreInput.value.trim();
+      const apellido = apellidoInput.value.trim();
+      const anioNacimiento = parseInt(anioNacimientoInput.value);
+
+      if (nombre && apellido && !isNaN(anioNacimiento)) {
+        await db.personas.add({
+          nombre,
+          apellido,
+          anioNacimiento
+        });
+
+        // Limpiar campos
+        nombreInput.value = "";
+        apellidoInput.value = "";
+        anioNacimientoInput.value = "";
+
+        // Actualizar lista
+        mostrarPersonas();
+      } else {
+        alert("Por favor, completa todos los campos correctamente.");
+      }
+    });
+
+    // 6. Mostrar personas al cargar la página
+    window.addEventListener("DOMContentLoaded", mostrarPersonas);
+  </script>
+</body>
+</html>
